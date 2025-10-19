@@ -1,0 +1,68 @@
+[package]
+name = "gloo_solana_dioxus_app"
+version = "0.1.0"
+edition = "2021"
+description = "A complete Dioxus application demonstrating Solana blockchain integration"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/lidm0707/gloo_solana"
+
+[dependencies]
+# Dioxus framework - web focused
+dioxus = { version = "0.6", features = ["web"] }
+dioxus-web = { version = "0.6", optional = true }
+
+# gloo_solana library (path dependency for development)
+gloo_solana = { path = "../../", features = ["dioxus"] }
+
+# WASM dependencies
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = { version = "0.4", optional = true }
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+  "Headers",
+  "Request",
+  "RequestInit",
+  "RequestMode",
+  "Response",
+  "Window",
+  "console",
+] }
+
+# Async and utilities
+futures = "0.3"
+thiserror = "1.0"
+
+# Logging
+console_log = "1.0"
+log = "0.4"
+
+# Timers for WASM
+gloo-timers = { version = "0.3", optional = true }
+
+[features]
+default = ["dioxus"]
+dioxus = ["dep:dioxus-web", "dep:wasm-bindgen-futures", "dep:gloo-timers"]
+web = ["dioxus"]
+
+[[bin]]
+name = "gloo_solana_dioxus_app"
+path = "src/main.rs"
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz"]
+
+# Development metadata for Dioxus CLI - web focused
+[package.metadata.dx]
+target = "web"

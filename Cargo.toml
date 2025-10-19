@@ -18,7 +18,7 @@ serde_json = "1.0"
 
 # WASM dependencies
 wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
+wasm-bindgen-futures = { version = "0.4", optional = true }
 js-sys = "0.3"
 web-sys = { version = "0.3", features = [
   "Headers",
@@ -41,10 +41,14 @@ bs58 = "0.5"
 sha2 = "0.10"
 
 # Optional Dioxus integration
-dioxus = { version = "0.6", optional = true }
+dioxus = { version = "0.6", features = ["desktop", "web"], optional = true }
+dioxus-web = { version = "0.6", optional = true }
+gloo-timers = { version = "0.3", optional = true }
 
 # Example dependencies
 tokio = { version = "1.0", features = ["full"] }
+console_log = "1.0"
+
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
@@ -54,7 +58,9 @@ console_log = "1.0"
 
 [features]
 default = []
-dioxus = ["dep:dioxus"]
+dioxus = ["dep:dioxus", "dep:dioxus-web", "dep:wasm-bindgen-futures", "dep:gloo-timers"]
+web = ["dioxus"]
+desktop = ["dioxus"]
 
 [[example]]
 name = "hello_surfpool"
@@ -71,6 +77,11 @@ path = "examples/program_deployment/src/main.rs"
 [[example]]
 name = "program_deployment_demo"
 path = "examples/program_deployment_demo.rs"
+
+[[example]]
+name = "dioxus_app"
+path = "examples/gloo_solana_dioxus_app/src/main.rs"
+required-features = ["dioxus"]
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]

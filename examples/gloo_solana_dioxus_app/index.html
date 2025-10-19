@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8</head>" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>🌊 gloo_solana Dioxus Example</title>
+        <meta
+            name="description</title>"
+            content="A complete Dioxus application demonstrating Solana blockchain integration"
+        />
+        <meta
+            name="keywords"
+            content="solana, blockchain, rust, dioxus, webassembly, wasm"
+        />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="🌊 gloo_solana Dioxus Example" />
+        <meta
+            property="og:description"
+            content="A complete Dioxus application demonstrating Solana blockchain integration"
+        />
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta
+            property="twitter:title"
+            content="🌊 gloo_solana Dioxus Example"
+        />
+        <meta
+            property="twitter:description"
+            content="A complete Dioxus application demonstrating Solana blockchain integration"
+        />
+
+        <!-- Favicon -->
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>"
+        />
+
+        <!-- Theme -->
+        <meta name="theme-color" content="#00d4ff" />
+
+        <!-- Styles -->
+        <link rel="stylesheet" href="public/styles.css" />
+
+        <!-- Preload for performance -->
+        <link rel="preload" href="public/styles.css" as="style" />
+    </head>
+    <body>
+        <div id="main"></div>
+
+        <!-- Dioxus App</body> Script -->
+        <script type="module">
+            import init from "./target/gloo_solana_dioxus_app.js";
+
+            init()
+                .then(() => {
+                    console.log(
+                        "🌊 gloo_solana Dioxus app loaded successfully!",
+                    );
+                })
+                .catch((error) => {
+                    console.error(
+                        "Failed to load gloo_solana Dioxus app:",
+                        error,
+                    );
+
+                    // Show error message to user
+                    const main = document.getElementById("main");
+                    main.innerHTML = `
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    font-family: system-ui, -apple-system, sans-serif;
+                    color: #333;
+                    text-align: center;
+                    padding: 20px;
+                ">
+                    <h1 style="color: #ff6b6b; margin-bottom: 20px;">⚠️ Application Failed to Load</h1>
+                    <p style="max-width: 500px; line-height: 1.6;">
+                        There was an error loading the gloo_solana Dioxus application.
+                        Please check the browser console for more details and ensure
+                        that WebAssembly is enabled in your browser.
+                    </p>
+                    <details style="margin-top: 20px; text-align: left;">
+                        <summary style="cursor: pointer; font-weight: bold;">Technical Details</summary>
+                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px; overflow-x: auto;">
+${error.stack || error.message || error}
+                        </pre>
+                    </details>
+                </div>
+            `;
+                });
+        </script>
+    </body>
+</html>
