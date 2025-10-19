@@ -250,6 +250,10 @@ match client.get_balance(&pubkey).await {
 - `basic_test.rs` - Core functionality testing
 - `test_surfpool.rs` - Surfpool connection testing (WASM only)
 - `dioxus_app.rs` - Complete Dioxus application example
+- `hello_surfpool_demo.rs` - "Hello Surf" account demonstration (works without network)
+- `hello_surfpool/` - Full WASM example with real network operations
+
+See [examples/README.md](examples/README.md) for detailed documentation of all examples.
 
 ## Testing
 

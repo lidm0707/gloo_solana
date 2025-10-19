@@ -8,6 +8,8 @@ use crate::domain::types::Pubkey;
 use crate::infrastructure::rpc::SolanaRpcClient;
 use std::error::Error;
 
+pub mod programs;
+
 /// Account service for handling account-related operations
 pub struct AccountService {
     rpc_client: SolanaRpcClient,

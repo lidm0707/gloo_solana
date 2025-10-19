@@ -64,5 +64,13 @@ path = "examples/hello_surfpool/src/main.rs"
 name = "hello_surfpool_demo"
 path = "examples/hello_surfpool_demo.rs"
 
+[[example]]
+name = "program_deployment"
+path = "examples/program_deployment/src/main.rs"
+
+[[example]]
+name = "program_deployment_demo"
+path = "examples/program_deployment_demo.rs"
+
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]
