@@ -6,7 +6,14 @@
 
 `gloo_solana` provides a complete rewrite of Solana SDK functionality designed specifically for WASM environments. Instead of using direct TCP connections, it communicates with Solana networks via HTTP JSON-RPC calls, making it perfect for web applications, Dioxus frontends, and browser-based dApps.
 
-## Features
+## 📚 Documentation
+
+- **[🚀 Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
+- **[📖 Program Creation Guide](PROGRAM_CREATION_GUIDE.md)** - Comprehensive guide for creating and calling programs
+- **[🧪 Testing Guide](TESTING.md)** - Learn how to test your Solana programs
+- **[🗺️ Roadmap](ROADMAP.md)** - Project development roadmap
+
+## ✨ Features
 
 - 🌐 **WASM-First Design**: Built from the ground up for browser environments
 - 🔗 **HTTP-Based Communication**: Uses `gloo_net` for JSON-RPC over HTTP
@@ -16,8 +23,11 @@
 - 🔀 **Multi-Network**: Support for mainnet, devnet, testnet, and custom endpoints
 - 🎯 **Dioxus Integration**: Seamless integration with Dioxus web framework
 - 🛡️ **Type Safe**: Full Rust type safety with comprehensive error handling
+- 📝 **Program Management**: Complete program lifecycle management (create, deploy, call)
+- 🎮 **Instruction Handling**: Full support for Solana program instructions
+- 📊 **Account Management**: Comprehensive account creation and management
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Installation
 
@@ -25,38 +35,48 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-gloo_solana = "0.1.0"
-gloo-net = { version = "0.6", features = ["http"] }
-serde = { version = "1.0", features = ["derive"] }
-```
-
-For Dioxus integration:
-
-```toml
-[dependencies]
 gloo_solana = { version = "0.1.0", features = ["dioxus"] }
-dioxus = "0.6"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
 ```
 
-### Basic Usage
+### 5-Minute Hello Program
 
 ```rust
-use gloo_solana::{RpcClientBuilder, surfpool_network, CommitmentLevel};
+use serde::{Deserialize, Serialize};
+use gloo_solana::{surfpool_network, RpcClientBuilder, CommitmentLevel};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HelloAccount {
+    pub greeting: String,
+    pub counter: u64,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create RPC client for surfpool (local development)
+    // Create RPC client
     let client = RpcClientBuilder::new(surfpool_network().endpoint())
         .commitment(CommitmentLevel::Confirmed)
         .build();
 
-    // Get account balance
-    let balance = client.get_balance(&system_program_id()).await?;
-    println!("System program balance: {} lamports", balance);
+    // Test connectivity
+    let version = client.get_version().await?;
+    println!("✅ Connected to surfpool v{}", version.solana_core);
 
+    // Create program account
+    let account = HelloAccount {
+        greeting: "Hello from gloo_solana! 🚀".to_string(),
+        counter: 42,
+    };
+
+    println!("📝 Account: {:?}", account);
     Ok(())
 }
 ```
+
+**For complete program creation and calling examples, see:**
+- [📖 Program Creation Guide](PROGRAM_CREATION_GUIDE.md)
+- [🚀 Quick Start Guide](QUICK_START.md)
 
 ## Core Concepts
 
@@ -245,15 +265,25 @@ match client.get_balance(&pubkey).await {
 }
 ```
 
-## Examples
+## 🎯 Examples
 
+### Program Creation & Deployment
+- `hello_program_complete.rs` - **Complete program lifecycle** (deploy, create accounts, call instructions)
+- `hello_program_deployment.rs` - Real program deployment simulation
+- `simple_hello_program.rs` - Focused program interaction test
+- `program_deployment/` - Advanced program deployment examples
+
+### Integration & Testing
+- `dioxus_app.rs` - Complete Dioxus web application
 - `basic_test.rs` - Core functionality testing
-- `test_surfpool.rs` - Surfpool connection testing (WASM only)
-- `dioxus_app.rs` - Complete Dioxus application example
-- `hello_surfpool_demo.rs` - "Hello Surf" account demonstration (works without network)
+- `test_surfpool_curl.rs` - Native surfpool testing
+- `deployment_summary.rs` - Comprehensive deployment validation
+
+### Getting Started
+- `hello_surfpool_demo.rs` - Simple account demonstration
 - `hello_surfpool/` - Full WASM example with real network operations
 
-See [examples/README.md](examples/README.md) for detailed documentation of all examples.
+**📚 See [examples/README.md](examples/README.md) for detailed documentation.**
 
 ## Testing
 
@@ -291,35 +321,38 @@ wasm-pack build --target nodejs --out-dir pkg
 # Run all unit tests
 cargo test
 
-# Run basic functionality test
-cargo run --example basic_test
+# Test program deployment
+cargo run --example hello_program_complete
 
-# Run surfpool test (requires surfpool running)
-cargo run --example test_surfpool
+# Test surfpool connectivity
+cargo run --example simple_hello_program
 
-# Run WASM tests
-wasm-pack test --headless --firefox
+# Run deployment validation
+cargo run --example deployment_summary
 ```
 
-### Surfpool Testing
+### Program Testing Workflow
 
-1. **Install and start surfpool:**
+1. **Start surfpool for local testing:**
    ```bash
    cargo install surfpool
    surfpool start
    ```
 
-2. **Run surfpool tests:**
+2. **Run complete program tests:**
    ```bash
-   cargo run --example test_surfpool
+   cargo run --example hello_program_complete  # Full lifecycle
+   cargo run --example simple_hello_program    # Basic interaction
+   cargo run --example deployment_summary      # Validation
    ```
 
-3. **Stop surfpool:**
+3. **Test web integration:**
    ```bash
-   surfpool stop
+   cd examples/dioxus_app
+   trunk serve
    ```
 
-For detailed testing instructions, see [TESTING.md](TESTING.md).
+**📖 For detailed testing instructions, see [TESTING.md](TESTING.md).**
 
 ## Dependencies
 
@@ -334,13 +367,18 @@ For detailed testing instructions, see [TESTING.md](TESTING.md).
 
 - `dioxus` - Web framework integration (feature flag)
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Add tests for new functionality
 4. Ensure all tests pass
 5. Submit a pull request
+
+**📚 Before contributing, please read:**
+- [Program Creation Guide](PROGRAM_CREATION_GUIDE.md) - Understand program patterns
+- [Testing Guide](TESTING.md) - Follow testing conventions
+- [Quick Start Guide](QUICK_START.md) - Get familiar with the API
 
 ## License
 
@@ -351,8 +389,21 @@ This project is licensed under either of:
 
 at your option.
 
-## Acknowledgments
+## 🌟 Acknowledgments
 
 - Built on top of the excellent `gloo-net` library
 - Inspired by the official Solana SDK
+- Designed for the emerging WASM web ecosystem
+
+## 🔗 Additional Resources
+
+- **[📖 Program Creation Guide](PROGRAM_CREATION_GUIDE.md)** - Learn to create and call programs
+- **[🚀 Quick Start Guide](QUICK_START.md)** - Get started in minutes
+- **[🧪 Testing Guide](TESTING.md)** - Testing best practices
+- **[🗺️ Roadmap](ROADMAP.md)** - Project development plans
+- **[Examples](examples/)** - Practical implementation examples
+
+---
+
+**🎉 Ready to build Solana programs in the browser? Start with the [Quick Start Guide](QUICK_START.md)! 🚀🌊**
 - Designed for the emerging WASM web ecosystem# gloo_solana
