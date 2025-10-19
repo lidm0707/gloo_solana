@@ -1,0 +1,28 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# WASM
+/pkg/
+*.wasm
+
+# Surfpool logs
+.surfpool/logs/
+
+# Temporary files
+text

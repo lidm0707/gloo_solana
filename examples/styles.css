@@ -1,0 +1,395 @@
+/* CSS styles for gloo_solana Dioxus application */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Network Selector */
+.network-selector {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.network-selector h3 {
+  margin-bottom: 15px;
+  color: #4a5568;
+  font-size: 1.2rem;
+}
+
+.network-selector select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  color: #2d3748;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.network-selector select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Network Info */
+.network-info {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.network-info h3 {
+  margin-bottom: 15px;
+  color: #4a5568;
+  font-size: 1.2rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  font-weight: 600;
+  color: #718096;
+  margin-right: 10px;
+}
+
+.info-row .value {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: #2d3748;
+  word-break: break-all;
+}
+
+.info-row.error .value {
+  color: #e53e3e;
+}
+
+/* Account Section */
+.account-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.account-section h2 {
+  margin-bottom: 20px;
+  color: #4a5568;
+  font-size: 1.3rem;
+}
+
+.pubkey-input {
+  margin-bottom: 20px;
+}
+
+.pubkey-input label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.pubkey-input input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  transition: border-color 0.2s;
+}
+
+.pubkey-input input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Balance Display */
+.balance-display {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-display .pubkey {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.balance-display .balance {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.balance-display .lamports {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.balance-error,
+.balance-loading {
+  background: #fed7d7;
+  color: #742a2a;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.balance-loading {
+  background: #e6fffa;
+  color: #234e52;
+}
+
+/* Account Info */
+.account-info {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.account-info h3 {
+  margin-bottom: 15px;
+  color: #2d3748;
+  font-size: 1.1rem;
+}
+
+.account-not-found,
+.account-error,
+.account-loading {
+  background: #fed7d7;
+  color: #742a2a;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.account-loading {
+  background: #e6fffa;
+  color: #234e52;
+}
+
+/* Error Message */
+.error-message {
+  background: #fed7d7;
+  color: #742a2a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #e53e3e;
+}
+
+/* Quick Actions */
+.quick-actions {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quick-actions h2 {
+  margin-bottom: 20px;
+  color: #4a5568;
+  font-size: 1.3rem;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.action-buttons button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.action-buttons button:active {
+  transform: translateY(0);
+}
+
+/* Info Section */
+.info-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.info-section h2 {
+  margin-bottom: 20px;
+  color: #4a5568;
+  font-size: 1.3rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.info-card {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.info-card h3 {
+  margin-bottom: 10px;
+  color: #4a5568;
+  font-size: 1.1rem;
+}
+
+.info-card p {
+  color: #718096;
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app {
+    padding: 15px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .balance-display {
+    text-align: center;
+  }
+
+  .action-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-section,
+.network-info,
+.network-selector,
+.quick-actions,
+.info-section {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.balance-loading,
+.account-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
