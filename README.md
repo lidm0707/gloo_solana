@@ -279,6 +279,44 @@ wasm-pack build --target bundler --out-dir pkg
 wasm-pack build --target nodejs --out-dir pkg
 ```
 
+## 🧪 Testing
+
+### Quick Test Commands
+
+```bash
+# Run all unit tests
+cargo test
+
+# Run basic functionality test
+cargo run --example basic_test
+
+# Run surfpool test (requires surfpool running)
+cargo run --example test_surfpool
+
+# Run WASM tests
+wasm-pack test --headless --firefox
+```
+
+### Surfpool Testing
+
+1. **Install and start surfpool:**
+   ```bash
+   cargo install surfpool
+   surfpool start
+   ```
+
+2. **Run surfpool tests:**
+   ```bash
+   cargo run --example test_surfpool
+   ```
+
+3. **Stop surfpool:**
+   ```bash
+   surfpool stop
+   ```
+
+For detailed testing instructions, see [TESTING.md](TESTING.md).
+
 ## Dependencies
 
 - `gloo-net` - HTTP client for WASM environments
