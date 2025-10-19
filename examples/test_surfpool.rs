@@ -139,7 +139,7 @@ mod tests {
 
         // Just test that the client is created successfully
         // Actual network calls would be tested in integration tests
-        assert_eq!(client.endpoint, "http://127.0.0.1:8899");
+        assert_eq!(client.endpoint(), "http://127.0.0.1:8899");
     }
 
     #[tokio::test]

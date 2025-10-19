@@ -5,6 +5,7 @@
 
 use crate::domain::types::{Hash, Pubkey, Signature};
 use crate::infrastructure::http::{HttpClient, HttpError};
+use crate::WasmHttpClient;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -12,7 +13,7 @@ use thiserror::Error;
 /// Solana JSON-RPC client
 #[derive(Clone)]
 pub struct SolanaRpcClient {
-    http_client: crate::infrastructure::http::WasmHttpClient,
+    http_client: WasmHttpClient,
     endpoint: String,
 }
 
@@ -26,6 +27,11 @@ impl SolanaRpcClient {
             http_client,
             endpoint: endpoint.into(),
         }
+    }
+
+    /// Get the RPC endpoint URL
+    pub fn endpoint(&self) -> &str {
+        &self.endpoint
     }
 
     /// Get account information
@@ -319,13 +325,6 @@ impl RpcClientBuilder {
     }
 }
 
-impl SolanaRpcClient {
-    /// Get the endpoint URL
-    pub fn endpoint(&self) -> &str {
-        &self.endpoint
-    }
-}
-
 /// RPC client configuration
 #[derive(Debug, Clone)]
 struct RpcClientConfig {
@@ -382,6 +381,6 @@ mod tests {
             .build();
 
         // Test that the client was created successfully
-        assert_eq!(client.endpoint, "http://localhost:8899");
+        assert_eq!(client.endpoint(), "http://localhost:8899");
     }
 }
