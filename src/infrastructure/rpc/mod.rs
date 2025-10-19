@@ -179,24 +179,7 @@ impl RpcRequest {
 /// JSON-RPC response structure
 #[derive(Debug, Clone, Deserialize)]
 struct RpcResponse<T> {
-    jsonrpc: String,
     result: T,
-    id: u64,
-}
-
-/// JSON-RPC error response structure
-#[derive(Debug, Clone, Deserialize)]
-struct RpcErrorResponse {
-    jsonrpc: String,
-    error: RpcErrorInfo,
-    id: u64,
-}
-
-/// RPC error information
-#[derive(Debug, Clone, Deserialize)]
-struct RpcErrorInfo {
-    code: i64,
-    message: String,
 }
 
 /// Account information from RPC
@@ -214,8 +197,6 @@ struct AccountInfo {
 struct AccountData {
     #[serde(rename = "data")]
     data: String, // Base64 encoded data
-    #[serde(rename = "encoding")]
-    encoding: String,
 }
 
 impl AccountData {

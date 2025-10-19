@@ -271,7 +271,7 @@ mod tests {
 
     #[test]
     fn test_http_client_builder() {
-        let client = HttpClientBuilder::new()
+        let _client = HttpClientBuilder::new()
             .timeout(5000)
             .default_header("User-Agent", "gloo-solana/0.1.0")
             .retry(true)

@@ -139,9 +139,9 @@ mod tests {
         let rpc_client =
             crate::infrastructure::rpc::RpcClientBuilder::new(Network::Devnet.endpoint()).build();
 
-        let account_service = AccountService::new(rpc_client.clone());
-        let transaction_service = TransactionService::new(rpc_client.clone());
-        let network_service = NetworkService::new(rpc_client);
+        let _account_service = AccountService::new(rpc_client.clone());
+        let _transaction_service = TransactionService::new(rpc_client.clone());
+        let _network_service = NetworkService::new(rpc_client);
 
         // Test that services are created successfully
         assert!(true); // Placeholder assertion
