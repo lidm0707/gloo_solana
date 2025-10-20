@@ -1,0 +1,43 @@
+# Rust-analyzer configuration for gloo_solana project
+# This file controls the behavior of rust-analyzer for better IDE integration
+
+# Use the correct rust-analyzer configuration format
+rust-analyzer.procMacro.enable = true
+
+rust-analyzer.cargo.features = "all"
+rust-analyzer.cargo.allTargets = true
+rust-analyzer.cargo.autoreload = true
+rust-analyzer.cargo.buildScripts.enable = true
+
+rust-analyzer.check.command = "clippy"
+rust-analyzer.check.features = "all"
+rust-analyzer.checkOnSave = true
+
+rust-analyzer.imports.granularity = "module"
+rust-analyzer.imports.prefix = "crate"
+
+rust-analyzer.inlayHints.typeHints.enable = true
+rust-analyzer.inlayHints.parameterHints.enable = true
+rust-analyzer.inlayHints.chainingHints.enable = true
+
+rust-analyzer.lens.enable = true
+rust-analyzer.lens.run.enable = true
+rust-analyzer.lens.debug.enable = true
+rust-analyzer.lens.implementations.enable = true
+rust-analyzer.lens.references.enable = true
+rust-analyzer.lens.methodReferences.enable = true
+rust-analyzer.lens.enumVariantReferences.enable = true
+
+rust-analyzer.hover.actions.enable = true
+rust-analyzer.hover.actions.implementations.enable = true
+rust-analyzer.hover.actions.references.enable = true
+rust-analyzer.hover.actions.run.enable = true
+rust-analyzer.hover.actions.debug.enable = true
+rust-analyzer.hover.actions.gotoTypeDef.enable = true
+
+rust-analyzer.wasm.target = "wasm32-unknown-unknown"
+
+rust-analyzer.files.watcherExclude = [
+    "**/target/**",
+    "**/node_modules/**"
+]

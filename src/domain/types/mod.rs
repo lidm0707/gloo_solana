@@ -74,6 +74,14 @@ impl fmt::Display for Pubkey {
     }
 }
 
+impl std::str::FromStr for Pubkey {
+    type Err = PubkeyError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Pubkey::from_base58(s)
+    }
+}
+
 /// A Solana signature
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Signature([u8; 64]);

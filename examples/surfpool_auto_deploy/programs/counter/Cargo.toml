@@ -1,0 +1,23 @@
+[package]
+name = "counter"
+version = "0.1.0"
+description = "Anchor counter program for auto-deployment with surfpool"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "counter"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = "0.31.1"
+anchor-spl = "0.31.1"
+
+[profile.release]
+overflow-checks = true

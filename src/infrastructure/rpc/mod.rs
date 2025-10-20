@@ -1,31 +1,123 @@
 //! Solana JSON-RPC client implementation
 //!
 //! This module provides a complete implementation of the Solana JSON-RPC API
-//! using HTTP requests, designed to work in WASM environments.
+//! using HTTP requests, designed to work in both WASM and native environments.
 
 use crate::domain::types::{Hash, Pubkey, Signature};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::infrastructure::http::NativeHttpClient;
+#[cfg(target_arch = "wasm32")]
+use crate::infrastructure::http::WasmHttpClient;
 use crate::infrastructure::http::{HttpClient, HttpError};
-use crate::WasmHttpClient;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::future::Future;
 use thiserror::Error;
 
 /// Solana JSON-RPC client
 #[derive(Clone)]
 pub struct SolanaRpcClient {
-    http_client: WasmHttpClient,
+    http_client: HttpClientEnum,
     endpoint: String,
+}
+
+/// Enum to hold different HTTP client implementations
+#[derive(Clone)]
+pub enum HttpClientEnum {
+    #[cfg(target_arch = "wasm32")]
+    Wasm(WasmHttpClient),
+    #[cfg(not(target_arch = "wasm32"))]
+    Native(NativeHttpClient),
+}
+
+#[cfg(target_arch = "wasm32")]
+impl HttpClient for HttpClientEnum {
+    fn post_json<'a, Req, Resp>(
+        &'a self,
+        url: &'a str,
+        body: &'a Req,
+    ) -> impl Future<Output = Result<Resp, HttpError>> + 'a
+    where
+        Req: Serialize + Send + Sync,
+        Resp: for<'de> Deserialize<'de> + 'static,
+    {
+        async move {
+            match self {
+                HttpClientEnum::Wasm(client) => client.post_json(url, body).await,
+            }
+        }
+    }
+
+    fn get<'a, Resp>(&'a self, url: &'a str) -> impl Future<Output = Result<Resp, HttpError>> + 'a
+    where
+        Resp: for<'de> Deserialize<'de> + 'static,
+    {
+        async move {
+            match self {
+                HttpClientEnum::Wasm(client) => client.get(url).await,
+            }
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl HttpClient for HttpClientEnum {
+    fn post_json<'a, Req, Resp>(
+        &'a self,
+        url: &'a str,
+        body: &'a Req,
+    ) -> impl Future<Output = Result<Resp, HttpError>> + 'a
+    where
+        Req: Serialize + Send + Sync,
+        Resp: for<'de> Deserialize<'de> + 'static,
+    {
+        async move {
+            match self {
+                HttpClientEnum::Native(client) => client.post_json(url, body).await,
+            }
+        }
+    }
+
+    fn get<'a, Resp>(&'a self, url: &'a str) -> impl Future<Output = Result<Resp, HttpError>> + 'a
+    where
+        Resp: for<'de> Deserialize<'de> + 'static,
+    {
+        async move {
+            match self {
+                HttpClientEnum::Native(client) => client.get(url).await,
+            }
+        }
+    }
 }
 
 impl SolanaRpcClient {
     /// Create a new RPC client with the given endpoint
-    pub fn new(
-        endpoint: impl Into<String>,
-        http_client: crate::infrastructure::http::WasmHttpClient,
-    ) -> Self {
+    #[cfg(target_arch = "wasm32")]
+    pub fn new(endpoint: impl Into<String>, http_client: WasmHttpClient) -> Self {
         Self {
-            http_client,
+            http_client: HttpClientEnum::Wasm(http_client),
             endpoint: endpoint.into(),
+        }
+    }
+
+    /// Create a new RPC client with the given endpoint
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new(endpoint: impl Into<String>, http_client: NativeHttpClient) -> Self {
+        Self {
+            http_client: HttpClientEnum::Native(http_client),
+            endpoint: endpoint.into(),
+        }
+    }
+
+    /// Create a new RPC client with default HTTP client
+    pub fn with_endpoint(endpoint: impl Into<String>) -> Self {
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self::new(endpoint, WasmHttpClient::new())
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self::new(endpoint, NativeHttpClient::new())
         }
     }
 
@@ -65,11 +157,18 @@ impl SolanaRpcClient {
     pub async fn get_balance(&self, pubkey: &Pubkey) -> Result<u64, RpcError> {
         let request = RpcRequest::new("getBalance").param(pubkey.to_base58());
 
-        let response: RpcResponse<BalanceInfo> = self
-            .http_client
-            .post_json(&self.endpoint, &request)
-            .await
-            .map_err(RpcError::Http)?;
+        let response: RpcResponse<BalanceInfo> = match &self.http_client {
+            #[cfg(target_arch = "wasm32")]
+            HttpClientEnum::Wasm(client) => client
+                .post_json(&self.endpoint, &request)
+                .await
+                .map_err(|e| RpcError::HttpError(e))?,
+            #[cfg(not(target_arch = "wasm32"))]
+            HttpClientEnum::Native(client) => client
+                .post_json(&self.endpoint, &request)
+                .await
+                .map_err(RpcError::Http)?,
+        };
 
         Ok(response.result.value)
     }
@@ -105,14 +204,22 @@ impl SolanaRpcClient {
     }
 
     /// Get block height
+    /// Get the current block height
     pub async fn get_block_height(&self) -> Result<u64, RpcError> {
         let request = RpcRequest::new("getBlockHeight");
 
-        let response: RpcResponse<u64> = self
-            .http_client
-            .post_json(&self.endpoint, &request)
-            .await
-            .map_err(RpcError::Http)?;
+        let response: RpcResponse<u64> = match &self.http_client {
+            #[cfg(target_arch = "wasm32")]
+            HttpClientEnum::Wasm(client) => client
+                .post_json(&self.endpoint, &request)
+                .await
+                .map_err(|e| RpcError::HttpError(e))?,
+            #[cfg(not(target_arch = "wasm32"))]
+            HttpClientEnum::Native(client) => client
+                .post_json(&self.endpoint, &request)
+                .await
+                .map_err(RpcError::Http)?,
+        };
 
         Ok(response.result)
     }
@@ -229,6 +336,7 @@ struct LatestBlockhashInfo {
 #[derive(Debug, Clone, Deserialize)]
 pub struct LatestBlockhash {
     pub blockhash: Hash,
+    #[serde(rename = "lastValidBlockHeight")]
     pub last_valid_block_height: u64,
 }
 
@@ -272,12 +380,23 @@ pub enum RpcError {
 }
 
 /// Network configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Network {
     Mainnet,
     Testnet,
     Devnet,
     Custom(String),
+}
+
+impl std::fmt::Display for Network {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Network::Mainnet => write!(f, "Mainnet"),
+            Network::Testnet => write!(f, "Testnet"),
+            Network::Devnet => write!(f, "Devnet"),
+            Network::Custom(url) => write!(f, "Custom({})", url),
+        }
+    }
 }
 
 impl Network {
@@ -320,8 +439,7 @@ impl RpcClientBuilder {
 
     /// Build the RPC client
     pub fn build(self) -> SolanaRpcClient {
-        let http_client = crate::infrastructure::http::WasmHttpClient::new();
-        SolanaRpcClient::new(self.endpoint, http_client)
+        SolanaRpcClient::with_endpoint(self.endpoint)
     }
 }
 

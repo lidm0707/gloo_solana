@@ -1,0 +1,36 @@
+[application]
+name = "gloo_solana_dioxus_app"
+# Currently supported platforms: web, desktop
+default_platform = "web"
+
+[web.app]
+title = "🌊 gloo_solana Dioxus Example"
+
+[web.resource]
+# CSS file and other resources can be specified here
+style = [
+    "../styles.css",
+]
+# Additional scripts can be added if needed
+# script = []
+
+[web.resource.dev]
+# Development configuration
+style = [
+    "../styles.css",
+]
+
+[web.watcher]
+# Paths to watch for changes
+reload_html = true
+watch_path = ["../"]
+
+[web.resource.dev]
+# Serve from the examples directory
+styles = [
+    "../styles.css"
+]
+
+[[web.proxy]]
+# Proxy backend requests for Solana RPC
+backend = "http://127.0.0.1:8899"

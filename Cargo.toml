@@ -33,6 +33,9 @@ web-sys = { version = "0.3", features = [
 # Async and utilities
 futures = "0.3"
 thiserror = "1.0"
+
+# Native HTTP client
+reqwest = { version = "0.11", features = ["json"], optional = true }
 uuid = { version = "1.0", features = ["wasm-bindgen"] }
 
 # Cryptography
@@ -48,6 +51,10 @@ gloo-timers = { version = "0.3", optional = true }
 # Example dependencies
 tokio = { version = "1.0", features = ["full"] }
 console_log = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+env_logger = "0.10"
+toml = "0.8"
+anyhow = "1.0"
 
 
 [dev-dependencies]
@@ -56,11 +63,13 @@ tokio = { version = "1.0", features = ["full"] }
 log = "0.4"
 console_log = "1.0"
 
+# Optional features
 [features]
-default = []
+default = ["reqwest"]
 dioxus = ["dep:dioxus", "dep:dioxus-web", "dep:wasm-bindgen-futures", "dep:gloo-timers"]
 web = ["dioxus"]
-desktop = ["dioxus"]
+desktop = ["dioxus", "reqwest"]
+native = ["reqwest"]
 
 [[example]]
 name = "hello_surfpool"
@@ -79,9 +88,15 @@ name = "program_deployment_demo"
 path = "examples/program_deployment_demo.rs"
 
 [[example]]
+name = "surfpool_auto_deploy"
+path = "examples/surfpool_auto_deploy/src/main.rs"
+
+[[example]]
 name = "dioxus_app"
 path = "examples/gloo_solana_dioxus_app/src/main.rs"
 required-features = ["dioxus"]
+
+
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz"]

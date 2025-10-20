@@ -8,7 +8,9 @@ pub mod http;
 pub mod rpc;
 
 // Re-export commonly used infrastructure components
-pub use http::{HttpClient, HttpClientBuilder, HttpError, WasmHttpClient};
+pub use http::HttpError;
+#[cfg(target_arch = "wasm32")]
+pub use http::WasmHttpClient;
 pub use rpc::{
     surfpool_network, Account, CommitmentLevel, LatestBlockhash, Network, RpcClientBuilder,
     RpcError, SolanaRpcClient,

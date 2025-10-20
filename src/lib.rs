@@ -37,7 +37,9 @@ pub mod infrastructure;
 // Re-export commonly used types
 pub use domain::types::constants;
 pub use domain::types::{Hash, HashError, Pubkey, PubkeyError, Signature, SignatureError};
-pub use infrastructure::http::{HttpClient, HttpClientBuilder, HttpError, WasmHttpClient};
+pub use infrastructure::http::HttpError;
+#[cfg(target_arch = "wasm32")]
+pub use infrastructure::http::WasmHttpClient;
 pub use infrastructure::rpc::{
     surfpool_network, Account, CommitmentLevel, LatestBlockhash, Network, RpcClientBuilder,
     RpcError, SolanaRpcClient,
