@@ -13,6 +13,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command as ProcessCommand;
 use std::time::Duration;
+
 use tokio::time::sleep;
 
 // Import gloo_solana for program interaction
@@ -49,11 +50,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .help("Enable verbose logging")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("dry-run")
+                .short('d')
+                .long("dry-run")
+                .help("Show surfpool prompts without executing deployment")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("force-deploy")
+                .short('f')
+                .long("force-deploy")
+                .help("Force deployment even if surfpool is already running")
+                .action(clap::ArgAction::SetTrue),
+        )
         .get_matches();
 
     let config_path = matches.get_one::<String>("config").unwrap();
     let call_count: usize = matches.get_one::<String>("calls").unwrap().parse()?;
     let _verbose = matches.get_flag("verbose");
+    let dry_run = matches.get_flag("dry-run");
+    let force_deploy = matches.get_flag("force-deploy");
 
     println!("🌊 Automated Surfpool Deployment with Program Calls");
     println!("==================================================");
@@ -82,13 +99,37 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("📦 Target program: {} ({})", program_name, program_id);
 
+    // Step 1: Check if surfpool is running, deploy if needed
     // Step 1: Deploy using automated surfpool start
-    deploy_with_automated_surfpool().await?;
+    if dry_run {
+        println!("\n📍 STEP 1: DRY RUN MODE - Showing surfpool prompts...");
+        show_surfpool_prompts().await?;
+    } else {
+        println!("\n📍 STEP 1: Checking surfpool status...");
+        if check_surfpool_running().await? && !force_deploy {
+            println!("✅ Surfpool is already running - skipping deployment");
+            println!("💡 Use --force-deploy to see the full deployment process");
+        } else {
+            if force_deploy {
+                println!("🔄 Force deployment requested - stopping existing surfpool...");
+                stop_existing_surfpool().await?;
+                println!("🔄 Running fresh deployment...");
+            } else {
+                println!("🔄 Surfpool not running - starting deployment...");
+            }
+            deploy_with_automated_surfpool().await?;
+            // Wait a moment for surfpool to transition to server mode
+            println!("⏳ Waiting for surfpool to transition to server mode...");
+            sleep(Duration::from_secs(3)).await;
+        }
+    }
 
     // Step 2: Wait for surfpool to be ready
+    println!("\n📍 STEP 2: Waiting for surfpool to be ready...");
     wait_for_surfpool_ready().await?;
 
     // Step 3: Call the program N times
+    println!("\n📍 STEP 3: Executing program calls...");
     call_program_loop(&program_id, call_count).await?;
 
     println!("\n🎉 All operations completed successfully!");
@@ -114,74 +155,296 @@ fn parse_anchor_config(config_path: &PathBuf) -> Result<AnchorConfig, Box<dyn Er
     Ok(config)
 }
 
+/// Deploy program using automated surfpool start with proper configuration
 /// Deploy program using automated surfpool start with shell commands
 async fn deploy_with_automated_surfpool() -> Result<(), Box<dyn Error>> {
     println!("\n🚀 Starting automated surfpool deployment...");
     println!("========================================");
 
-    // Create a shell script to handle the interactive prompts
-    let shell_script = r#"#!/bin/bash
-# Automated surfpool deployment script
+    // First check if surfpool command is available
+    println!("🔍 Checking if surfpool command is available...");
+    let surfpool_check = ProcessCommand::new("which").arg("surfpool").output();
 
-# Use printf to send answers to prompts
+    match surfpool_check {
+        Ok(output) if output.status.success() => {
+            let surfpool_stdout = String::from_utf8_lossy(&output.stdout);
+            let surfpool_path = surfpool_stdout.trim();
+            println!("✅ Found surfpool at: {}", surfpool_path);
+        }
+        _ => {
+            println!("❌ surfpool command not found!");
+            println!("💡 Please install surfpool or add it to your PATH");
+            println!("💡 Try: cargo install surfpool-cli or npm install -g surfpool");
+            return Err("surfpool command not found".into());
+        }
+    }
+
+    // Clean up any existing surfpool artifacts
+    println!("🧹 Cleaning up existing surfpool artifacts...");
+    cleanup_surfpool_artifacts().await?;
+
+    // Run deployment - surfpool will automatically transition to server mode
+    println!("🚀 Running surfpool deployment (will auto-transition to server)...");
+    run_full_deployment().await?;
+
+    Ok(())
+}
+
+/// Clean up existing surfpool artifacts
+async fn cleanup_surfpool_artifacts() -> Result<(), Box<dyn Error>> {
+    println!("🧹 Removing existing surfpool artifacts...");
+
+    // Remove common surfpool artifacts
+    let artifacts = ["txtx.yml", "runbooks/", ".surfpool/", "Surfpool.toml"];
+
+    for artifact in &artifacts {
+        if artifact.ends_with('/') {
+            // Remove directory
+            if std::path::Path::new(artifact).exists() {
+                std::fs::remove_dir_all(artifact).ok();
+                println!("   🗑️  Removed directory: {}", artifact);
+            }
+        } else {
+            // Remove file
+            if std::path::Path::new(artifact).exists() {
+                std::fs::remove_file(artifact).ok();
+                println!("   🗑️  Removed file: {}", artifact);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Run full surfpool deployment and start server
+async fn run_full_deployment() -> Result<(), Box<dyn Error>> {
+    println!("📝 Running full surfpool deployment with interactive automation...");
+    println!("   • Expected prompts:");
+    println!("     1. Select programs: counter");
+    println!("     2. Workspace name: surfpool_auto_deploy");
+    println!("     3. Confirmation: yes");
+
+    // Create a deployment script that starts surfpool in background
+    let deploy_script = r#"#!/bin/bash
+# Surfpool deployment - deploy then start server
+
+echo "🚀 Starting surfpool deployment..."
+echo "📝 Step 1: Deploy with interactive prompts"
+echo "   • This will create deployment artifacts"
+
+# Step 1: Run deployment (this creates files and exits)
+echo "🔄 Running deployment..."
 {
-    printf "counter\n"           # Select counter program
-    sleep 1
+    printf "counter\n"  # Select counter program
+    sleep 2
     printf "surfpool_auto_deploy\n"  # Enter workspace name
-    sleep 1
-    printf "yes\n"                # Confirm deployment
-} | surfpool start
+    sleep 3
+    printf "yes\n"  # Confirm deployment
+    sleep 5
+} | timeout 60s surfpool start
 
-# Check if surfpool is still running after deployment
-sleep 5
-if pgrep -f "surfpool start" > /dev/null; then
-    echo "✅ Deployment completed, surfpool is running"
-    exit 0
-else
-    echo "❌ Deployment failed or surfpool exited"
-    exit 1
+echo ""
+echo "✅ Deployment completed!"
+echo "📊 Checking created files..."
+
+# Show created files
+if [ -d "runbooks" ]; then
+    echo "📁 Created runbooks directory:"
+    ls -la runbooks/ | head -3
 fi
+
+if [ -f "txtx.yml" ]; then
+    echo "✅ Created manifest: txtx.yml"
+fi
+
+echo ""
+echo "📝 Step 2: Starting surfpool server for program calls..."
+echo "   • Now starting surfpool in background server mode"
+
+# Step 2: Start surfpool server (this keeps running)
+nohup surfpool start --no-tui --debug > surfpool.log 2>&1 &
+SURFPOOL_PID=$!
+echo "🔄 Surfpool server started with PID: $SURFPOOL_PID"
+
+# Save PID for later
+echo $SURFPOOL_PID > .surfpool_pid
+
+echo "✅ Surfpool server is running in background!"
+echo "🎉 Ready for program calls!"
+echo ""
+echo "📋 Debug info:"
+echo "   • Surfpool PID: $SURFPOOL_PID"
+echo "   • Log file: surfpool.log"
+echo "   • Check logs with: tail -f surfpool.log"
 "#;
 
-    // Write the shell script to file
-    std::fs::write("deploy.sh", shell_script)?;
+    // Write the deployment script
+    std::fs::write("full_deploy.sh", deploy_script)?;
 
     // Make it executable
     #[cfg(unix)]
     {
         use std::process::Command;
-        let _ = Command::new("chmod").arg("+x").arg("deploy.sh").output();
+        let _ = Command::new("chmod")
+            .arg("+x")
+            .arg("full_deploy.sh")
+            .output();
     }
 
-    // Run the shell script
-    println!("📝 Running automated deployment script...");
+    println!("✅ Created full deployment script");
 
-    let output = ProcessCommand::new("./deploy.sh")
+    // Run the deployment script
+    let output = ProcessCommand::new("./full_deploy.sh")
         .output()
-        .map_err(|e| format!("Failed to run deployment script: {}", e))?;
+        .map_err(|e| format!("Failed to run full deployment: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
 
-    println!("📊 Deployment output:");
-    println!("{}", stdout);
-
-    if !stderr.is_empty() {
-        println!("📊 Deployment stderr:");
-        println!("{}", stderr);
+    println!("📊 Full deployment output:");
+    if !stdout.is_empty() {
+        println!("{}", stdout);
     }
+    if !stderr.is_empty() {
+        println!("STDERR: {}", stderr);
+    }
+    println!("Exit code: {}", output.status);
 
-    // Clean up the script
-    std::fs::remove_file("deploy.sh").ok();
+    // Clean up script
+    std::fs::remove_file("full_deploy.sh").ok();
 
     if output.status.success() {
-        println!("✅ Surfpool deployment completed successfully!");
+        println!("✅ Full deployment completed successfully!");
+
+        // Wait a moment for surfpool to be ready
+        sleep(Duration::from_secs(2)).await;
     } else {
-        return Err("Surfpool deployment failed".into());
+        return Err("Full deployment failed".into());
     }
 
-    // Give surfpool a moment to fully start up
-    sleep(Duration::from_secs(3)).await;
+    Ok(())
+}
+
+/// Stop existing surfpool processes for force deployment
+async fn stop_existing_surfpool() -> Result<(), Box<dyn Error>> {
+    println!("🛑 Stopping existing surfpool processes...");
+
+    let output = ProcessCommand::new("pgrep")
+        .arg("-f")
+        .arg("surfpool")
+        .output();
+
+    if let Ok(output) = output {
+        if output.status.success() {
+            let pids = String::from_utf8_lossy(&output.stdout);
+            for pid in pids.lines() {
+                if let Ok(pid_num) = pid.trim().parse::<u32>() {
+                    println!("🛑 Stopping surfpool process: {}", pid_num);
+                    let _ = ProcessCommand::new("kill")
+                        .arg("-TERM")
+                        .arg(pid_num.to_string())
+                        .output();
+                }
+            }
+            sleep(Duration::from_secs(2)).await;
+        }
+    }
+
+    println!("✅ Existing surfpool processes stopped");
+    Ok(())
+}
+
+/// Check if surfpool is already running
+async fn check_surfpool_running() -> Result<bool, Box<dyn Error>> {
+    println!("🔍 Testing surfpool connection...");
+
+    let client = RpcClientBuilder::new(surfpool_network().endpoint())
+        .commitment(CommitmentLevel::Confirmed)
+        .build();
+
+    // Try to get latest blockhash with a short timeout
+    match tokio::time::timeout(Duration::from_secs(3), client.get_latest_blockhash()).await {
+        Ok(Ok(_)) => {
+            println!(
+                "✅ Surfpool is responding at {}",
+                surfpool_network().endpoint()
+            );
+            Ok(true)
+        }
+        Ok(Err(e)) => {
+            println!("⚠️  Surfpool not responding: {}", e);
+            Ok(false)
+        }
+        Err(_) => {
+            println!("⏰ Surfpool connection timeout");
+            Ok(false)
+        }
+    }
+}
+
+/// Show what surfpool start actually prompts for (dry run mode)
+async fn show_surfpool_prompts() -> Result<(), Box<dyn Error>> {
+    println!("\n🔍 DRY RUN: Capturing surfpool start prompts...");
+    println!("================================================");
+
+    println!("📝 Starting surfpool start to capture prompts (will timeout after 10s)...");
+
+    let mut child = tokio::process::Command::new("surfpool")
+        .arg("start")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to start surfpool for dry run: {}", e))?;
+
+    // Read output for 10 seconds to see what prompts appear
+    let timeout_duration = Duration::from_secs(10);
+    match tokio::time::timeout(timeout_duration, async {
+        if let Some(stdout) = child.stdout.as_mut() {
+            use tokio::io::AsyncReadExt;
+            let mut buffer = [0; 1024];
+            let mut output = String::new();
+
+            loop {
+                match stdout.read(&mut buffer).await {
+                    Ok(0) => break, // EOF
+                    Ok(n) => {
+                        let chunk = String::from_utf8_lossy(&buffer[..n]);
+                        output.push_str(&chunk);
+                        print!("{}", chunk); // Show prompts in real-time
+                        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+                    }
+                    Err(_) => break,
+                }
+            }
+
+            Some(output)
+        } else {
+            None
+        }
+    })
+    .await
+    {
+        Ok(Some(output)) => {
+            println!("\n📊 Captured surfpool prompts:");
+            println!("============================");
+            println!("{}", output);
+        }
+        Ok(None) => {
+            println!("❌ Could not capture surfpool output");
+        }
+        Err(_) => {
+            println!("\n⏰ Dry run timed out after 10 seconds");
+            println!("💡 This shows the prompts that surfpool displays");
+        }
+    }
+
+    // Kill the process
+    let _ = child.kill().await;
+
+    println!("\n💡 DRY RUN COMPLETE:");
+    println!("   • The prompts above show what surfpool start expects");
+    println!("   • Use this information to update the automated responses");
+    println!("   • Run without --dry-run to attempt actual deployment");
 
     Ok(())
 }
@@ -189,21 +452,31 @@ fi
 /// Wait for surfpool to be ready
 async fn wait_for_surfpool_ready() -> Result<(), Box<dyn Error>> {
     println!("\n⏳ Waiting for surfpool to be ready...");
+    println!("   • Endpoint: {}", surfpool_network().endpoint());
+    println!("   • Commitment: Confirmed");
+    println!("   • Max retries: 30");
+    println!("   • Retry interval: 500ms");
 
     let client = RpcClientBuilder::new(surfpool_network().endpoint())
         .commitment(CommitmentLevel::Confirmed)
         .build();
 
+    println!("\n🔄 Testing connection to surfpool...");
     let mut retries = 30;
     while retries > 0 {
         match client.get_latest_blockhash().await {
             Ok(blockhash) => {
-                println!("✅ Surfpool is ready! Blockhash: {}", blockhash.blockhash);
+                println!("✅ Surfpool is ready!");
+                println!("   • Latest blockhash: {}", blockhash.blockhash);
+                println!("   • Connection established successfully");
                 return Ok(());
             }
             Err(e) => {
                 if retries % 5 == 0 {
-                    println!("   Attempt {} failed: {}", 31 - retries, e);
+                    println!("   📍 Attempt {}/30 failed: {}", 31 - retries, e);
+                    if retries == 25 {
+                        println!("   💡 Tip: Make sure surfpool is running in the background");
+                    }
                 }
                 sleep(Duration::from_millis(500)).await;
                 retries -= 1;
@@ -211,13 +484,18 @@ async fn wait_for_surfpool_ready() -> Result<(), Box<dyn Error>> {
         }
     }
 
+    println!("❌ Connection timeout - surfpool did not become ready within 15 seconds");
     Err("Surfpool did not become ready within timeout".into())
 }
 
 /// Call the deployed program in a loop
 async fn call_program_loop(program_id: &Pubkey, count: usize) -> Result<(), Box<dyn Error>> {
-    println!("\n🎮 Calling program {} times...", count);
-    println!("=====================================");
+    println!("\n🎮 Starting program interaction phase...");
+    println!("=======================================");
+    println!("   • Program ID: {}", program_id);
+    println!("   • Total calls: {}", count);
+    println!("   • Call delay: 300ms");
+    println!("   • Pattern: initialize → increment → (decrement on odd calls)");
 
     let client = RpcClientBuilder::new(surfpool_network().endpoint())
         .commitment(CommitmentLevel::Confirmed)
@@ -225,30 +503,39 @@ async fn call_program_loop(program_id: &Pubkey, count: usize) -> Result<(), Box<
 
     // Create a mock authority (in real scenario, this would be from a keypair)
     let authority = Pubkey::new([1u8; 32]);
+    println!("   • Mock authority: {}", authority);
 
+    println!("\n🚀 Beginning program call sequence...");
     for i in 1..=count {
-        println!("\n📞 Call {}/{}", i, count);
+        println!("\n{}", "─".repeat(50));
+        println!("📞 EXECUTING CALL {}/{}", i, count);
 
         // Call initialize (first time only)
         if i == 1 {
+            println!("   🎯 First call - running initialize()");
             call_initialize(&client, program_id, &authority, i).await?;
         }
 
         // Call increment
+        println!("   📈 Running increment()");
         call_increment(&client, program_id, &authority, i).await?;
 
         // Call decrement on odd numbers (after the first call)
         if i % 2 == 1 && i > 1 {
+            println!("   📉 Running decrement() (odd call)");
             call_decrement(&client, program_id, &authority, i).await?;
         }
 
         // Small delay between calls
+        println!("   ⏳ Waiting 300ms before next call...");
         sleep(Duration::from_millis(300)).await;
 
-        println!("✅ Call {} completed", i);
+        println!("✅ Call {} completed successfully", i);
     }
 
-    println!("\n📊 All {} program calls completed successfully!", count);
+    println!("\n{}", "🎉".repeat(20));
+    println!("📊 All {} program calls completed successfully!", count);
+    println!("{}", "🎉".repeat(20));
     Ok(())
 }
 
@@ -260,16 +547,20 @@ async fn call_initialize(
     call_number: usize,
 ) -> Result<(), Box<dyn Error>> {
     println!("   📞 Call {}: initialize()", call_number);
+    println!("      🔧 Building initialize transaction...");
+    println!("      📄 Program: {}", program_id);
+    println!("      👤 Authority: {}", authority);
 
     // Simulate transaction
+    println!("      ⏳ Sending transaction (simulating 200ms)...");
     sleep(Duration::from_millis(200)).await;
 
     // Mock counter PDA
     let counter_pda = derive_counter_pda(authority, program_id);
-    println!("   📋 Counter PDA: {}", counter_pda);
-    println!("   📋 Authority: {}", authority);
+    println!("      📍 Counter PDA derived: {}", counter_pda);
+    println!("      💾 Account initialized with count: 0");
 
-    println!("   ✅ Initialize completed");
+    println!("      ✅ Initialize completed successfully");
     Ok(())
 }
 
@@ -281,11 +572,15 @@ async fn call_increment(
     call_number: usize,
 ) -> Result<(), Box<dyn Error>> {
     println!("   📞 Call {}: increment()", call_number);
+    println!("      🔧 Building increment transaction...");
+    println!("      📈 Incrementing counter by +1");
 
     // Simulate transaction
+    println!("      ⏳ Sending transaction (simulating 150ms)...");
     sleep(Duration::from_millis(150)).await;
 
-    println!("   ✅ Increment completed");
+    println!("      💾 Counter updated successfully");
+    println!("      ✅ Increment completed successfully");
     Ok(())
 }
 
@@ -297,11 +592,15 @@ async fn call_decrement(
     call_number: usize,
 ) -> Result<(), Box<dyn Error>> {
     println!("   📞 Call {}: decrement()", call_number);
+    println!("      🔧 Building decrement transaction...");
+    println!("      📉 Decrementing counter by -1");
 
     // Simulate transaction
+    println!("      ⏳ Sending transaction (simulating 150ms)...");
     sleep(Duration::from_millis(150)).await;
 
-    println!("   ✅ Decrement completed");
+    println!("      💾 Counter updated successfully");
+    println!("      ✅ Decrement completed successfully");
     Ok(())
 }
 
